@@ -1,0 +1,10 @@
+version: '3'
+services:
+  nginx:
+      ports:
+      - "3000:80"
+  node-app:
+    volumes:
+      - ./:/app:ro
+      - /app/node_modules
+    command: npm run dev
