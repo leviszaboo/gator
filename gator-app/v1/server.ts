@@ -1,24 +1,43 @@
-import express from "express";
-import cors from "cors";
 import config from "config";
-import cookieParser from "cookie-parser";
 import routes from "./routes";
-import { deserializeUser } from "./middleware/deserializeUser";
 import logger from "./utils/logger";
+import createServer from "./utils/createServer";
+import { GracefulShutdownManager } from "@moebius/http-graceful-shutdown";
+import { Express } from "express";
+import { Server } from "http";
+import closeConnection from "./db/cleanup";
 
 const port = config.get<number>("port");
 
-const app = express();
+const shutdownSignals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];
 
-app.enable("trust proxy");
+function gracefulShutdown(
+  server: Server,
+  signal: (typeof shutdownSignals)[number],
+) {
+  const shutdownManager = new GracefulShutdownManager(server);
+  logger.info(`Received ${signal}. Starting graceful shutdown.`);
+  closeConnection();
+  shutdownManager.terminate(() => {
+    logger.info("Server is gracefully terminated");
+    process.exit(0);
+  });
+}
 
-app.use(cors());
-app.use(express.json());
-app.use(cookieParser());
-app.use(deserializeUser);
+async function startServer() {
+  const app = createServer();
 
-app.listen(port, () => {
+  const server = app.listen(port, () => {
     logger.info(`App is running on http://localhost:${port}`);
-    logger.info(`Initializing MySQL connection...`)
+    logger.info(`Initializing MySQL connection...`);
     routes(app);
-})
+  });
+
+  shutdownSignals.forEach((signal) => {
+    process.on(signal, () => {
+      gracefulShutdown(server, signal);
+    });
+  });
+}
+
+startServer();
