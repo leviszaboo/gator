@@ -2,7 +2,6 @@ import { Express, Request, Response } from "express";
 import {
   createUserHandler,
   getUserByIdHandler,
-  logOutUserHandler,
   loginUserHandler,
 } from "./controller/user.controller";
 import {
@@ -10,9 +9,16 @@ import {
   getUserByIdSchema,
   loginUserSchema,
 } from "./schema/user.schema";
+import {
+  invalidateTokenHandler,
+  reissueAccessTokenHandler,
+} from "./controller/token.controller";
 import validateResource from "./middleware/validateResource";
-import requireUser from "./middleware/requireUser";
 import logger from "./utils/logger";
+import {
+  invalidateTokenSchema,
+  reissueTokenSchema,
+} from "./schema/token.schema";
 
 export default function routes(app: Express) {
   /**
@@ -53,6 +59,8 @@ export default function routes(app: Express) {
    *              $ref: '#/components/schemas/CreateUserResponse'
    *      409:
    *        description: Conflict
+   *      401:
+   *        description: Unauthorized
    *      400:
    *        description: Bad request
    *      500:
@@ -84,6 +92,8 @@ export default function routes(app: Express) {
    *          application/json:
    *            schema:
    *              $ref: '#/components/schemas/LoginUserResponse'
+   *      404:
+   *        description: Not found
    *      401:
    *        description: Unauthorized
    *      400:
@@ -119,6 +129,8 @@ export default function routes(app: Express) {
    *              $ref: '#/components/schemas/GetUserByIdResponse'
    *      404:
    *        description: Not found
+   *      401:
+   *        description: Unauthorized
    *      400:
    *        description: Bad request
    *      500:
@@ -140,16 +152,63 @@ export default function routes(app: Express) {
 
   /**
    * @openapi
+   * '/api/tokens/reissue-token':
+   *  get:
+   *    tags:
+   *      - Tokens
+   *    summary: Reissue a JWT accesstoken.
+   *    requestBody:
+   *      required: true
+   *      content:
+   *        application/json:
+   *          schema:
+   *            $ref: '#/components/schemas/ReissueTokenInput'
+   *    responses:
+   *      200:
+   *        description: Success
+   *        content:
+   *          application/json:
+   *            schema:
+   *              $ref: '#/components/schemas/ReissueTokenResponse'
+   *      401:
+   *        description: Unauthorized
+   *      404:
+   *        description: Not found
+   *      400:
+   *        description: Bad request
+   *      500:
+   *       description: Internal server error
+   */
+  app.post(
+    "/api/v1/tokens/reissue-token",
+    validateResource(reissueTokenSchema),
+    reissueAccessTokenHandler,
+  );
+
+  /**
+   * @openapi
    * '/api/tokens/invalidate-token':
    *  post:
    *     tags:
    *     - Tokens
    *     summary: Invalidate a token
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/InvalidateTokenInput'
    *     responses:
-   *      200:
-   *        description: Success
-   *      500:
-   *       description: Internal server error
+   *       204:
+   *         description: Success
+   *       401:
+   *         description: Unauthorized
+   *       500:
+   *         description: Internal server error
    */
-  app.post("/api/v1/tokens/invalidate-token", requireUser, logOutUserHandler);
+  app.post(
+    "/api/v1/tokens/invalidate-token",
+    validateResource(invalidateTokenSchema),
+    invalidateTokenHandler,
+  );
 }

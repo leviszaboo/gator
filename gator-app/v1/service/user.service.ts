@@ -8,13 +8,12 @@ import UserNotFoundError from "../errors/user/UserNotFoundError";
 import config from "config";
 import IncorrectPasswordError from "../errors/user/IncorrectPasswordError";
 import EmailExistsError from "../errors/user/EmailExistsError";
-import logger from "../utils/logger";
 
 export async function getUserById(id: string) {
   try {
     const [user] = await pool.query<User[]>(
       "SELECT * FROM users WHERE user_id = ?",
-      [id]
+      [id],
     );
 
     if (!user[0]) {
@@ -31,7 +30,7 @@ export async function getUserByEmail(email: string) {
   try {
     const [user] = await pool.query<User[]>(
       "SELECT * FROM users WHERE email = ?",
-      [email]
+      [email],
     );
 
     return user[0];
@@ -44,6 +43,7 @@ interface AuthResponse {
   user: {
     userId: string;
     email: string;
+    emailVerified: boolean;
   };
   accessToken: string;
   refreshToken: string;
@@ -55,18 +55,18 @@ export async function loginUser(input: UserInput): Promise<AuthResponse> {
 
     if (!user) {
       throw new UserNotFoundError(
-        "User not found with the provided email address."
+        "User not found with the provided email address.",
       );
     }
 
     const passwordMatch = await bcrypt.compare(
       input.password,
-      user.password_hash
+      user.password_hash,
     );
 
     if (!passwordMatch) {
       throw new IncorrectPasswordError(
-        "Incorrect password for the provided email address."
+        "Incorrect password for the provided email address.",
       );
     }
 
@@ -78,7 +78,7 @@ export async function loginUser(input: UserInput): Promise<AuthResponse> {
       "access",
       {
         expiresIn: config.get<string>("JWT.accessTokenExpiresIn"),
-      }
+      },
     );
 
     const refreshToken = signJwt({ userId: user.user_id }, "refresh", {
@@ -89,6 +89,7 @@ export async function loginUser(input: UserInput): Promise<AuthResponse> {
       user: {
         userId: user.user_id,
         email: user.email,
+        emailVerified: user.email_verified === 1,
       },
       accessToken: token,
       refreshToken: refreshToken,
@@ -104,7 +105,7 @@ export async function createUser(input: UserInput) {
 
     if (existingUser) {
       throw new EmailExistsError(
-        "A user account with the provided email address already exists."
+        "A user account with the provided email address already exists.",
       );
     }
 
@@ -118,7 +119,7 @@ export async function createUser(input: UserInput) {
                 password_hash
             )
             VALUES (?, ?, ?)`,
-      [userId, input.email, passwordHash]
+      [userId, input.email, passwordHash],
     );
 
     if (userInsertResult.affectedRows === 1) {
@@ -140,40 +141,19 @@ export async function createUser(input: UserInput) {
   }
 }
 
-export async function reissueAccessToken(refreshToken: string) {
-  const { decoded } = await verifyJwt(refreshToken, "refresh");
+export async function deleteUser(id: string) {
+  try {
+    const [user] = await pool.query<User[]>(
+      "DELETE FROM users WHERE user_id = ?",
+      [id],
+    );
 
-  if (!decoded)
-    return {
-      newAccessToken: null,
-      newRefreshToken: null,
-    };
-
-  const user = await getUserById(decoded.userId);
-
-  if (!user)
-    return {
-      newAccessToken: null,
-      newRefreshToken: null,
-    };
-
-  const newRefreshToken = signJwt({ userId: user.user_id }, "refresh", {
-    expiresIn: "1d",
-  });
-
-  const newAccessToken = signJwt(
-    { userId: user.user_id, email: user.email },
-    "access",
-    {
-      expiresIn: "5m",
+    if (!user) {
+      throw new UserNotFoundError("User not found with the provided user ID.");
     }
-  );
 
-  logger.info(`Reissued access token for user ${user.user_id}`);
-
-  return {
-    newAccessToken: newAccessToken,
-    newRefreshToken: newRefreshToken,
-  };
+    return user[0];
+  } catch (err: any) {
+    throw err;
+  }
 }
-

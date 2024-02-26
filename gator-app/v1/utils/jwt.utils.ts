@@ -1,12 +1,18 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { Response } from "express";
 import config from "config";
-import { checkBlackListedToken } from "../service/blacklist.service";
+import { checkBlackListedToken } from "../service/token.service";
 
-const accessTokenPrivateKey = config.get<string>("JWT.jwtAccessTokenPrivateKey");
+const accessTokenPrivateKey = config.get<string>(
+  "JWT.jwtAccessTokenPrivateKey",
+);
 const accessTokenPublicKey = config.get<string>("JWT.jwtAccessTokenPublicKey");
-const refreshTokenPrivateKey = config.get<string>("JWT.jwtRefreshTokenPrivateKey");
-const refreshTokenPublicKey = config.get<string>("JWT.jwtRefreshTokenPrivateKey");
+const refreshTokenPrivateKey = config.get<string>(
+  "JWT.jwtRefreshTokenPrivateKey",
+);
+const refreshTokenPublicKey = config.get<string>(
+  "JWT.jwtRefreshTokenPrivateKey",
+);
 
 interface UserPayload extends JwtPayload {
   userId: string;
@@ -16,7 +22,7 @@ interface UserPayload extends JwtPayload {
 export function signJwt(
   object: Object,
   tokenType: "refresh" | "access",
-  options?: jwt.SignOptions | undefined
+  options?: jwt.SignOptions | undefined,
 ) {
   const key =
     tokenType === "access" ? accessTokenPrivateKey : refreshTokenPrivateKey;
@@ -26,7 +32,10 @@ export function signJwt(
   });
 }
 
-export async function verifyJwt(token: string, tokenType: "refresh" | "access") {
+export async function verifyJwt(
+  token: string,
+  tokenType: "refresh" | "access",
+) {
   const blackListed = await checkBlackListedToken(token);
 
   if (blackListed) {
@@ -59,7 +68,7 @@ export async function verifyJwt(token: string, tokenType: "refresh" | "access") 
 export function setTokenCookie(
   res: Response,
   token: string,
-  tokenType: "refresh" | "access"
+  tokenType: "refresh" | "access",
 ) {
   if (tokenType === "access") {
     res.cookie("jwtAccessToken", token, {

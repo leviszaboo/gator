@@ -1,7 +1,7 @@
 import { Express, Request, Response } from "express";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import log from "./logger";
+import logger from "./logger";
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -11,6 +11,26 @@ const options: swaggerJsdoc.Options = {
       version: "1.0.0",
     },
   },
+  components: {
+    securitySchemes: {
+      apiKey: {
+        type: "apiKey",
+        in: "header",
+        name: "X-API-Key",
+      },
+      appId: {
+        type: "apiKey",
+        in: "header",
+        name: "X-App-Id",
+      },
+    },
+  },
+  security: [
+    {
+      apiKey: [],
+      appId: [],
+    },
+  ],
   apis: ["./v1/routes.ts", "./v1/schema/*.ts"],
 };
 
@@ -19,12 +39,12 @@ const swaggerSpec = swaggerJsdoc(options);
 function swaggerDocs(app: Express, port: number) {
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-  app.get("/docs.json", (_req: Request, res: Response) => {
+  app.get("/docs/docs.json", (_req: Request, res: Response) => {
     res.setHeader("Content-Type", "application/json");
     res.send(swaggerSpec);
   });
 
-  log.info(`Docs available at http://localhost:${port}/docs`);
+  logger.info(`Docs available at http://localhost:${port}/docs`);
 }
 
 export default swaggerDocs;

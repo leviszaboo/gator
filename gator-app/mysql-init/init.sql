@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 
 -- Create tokens table
-CREATE TABLE IF NOT EXISTS tokens (
+CREATE TABLE IF NOT EXISTS blacklist (
     token VARCHAR(755) NOT NULL PRIMARY KEY
 ); 
 

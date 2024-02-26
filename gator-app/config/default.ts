@@ -3,6 +3,8 @@ import "dotenv/config";
 export default {
   env: process.env.NODE_ENV,
   port: process.env.PORT || 3000,
+  apiKey: process.env.API_KEY,
+  appId: process.env.APP_ID,
   DB: {
     dbHost: process.env.MYSQL_HOST,
     dbUser: process.env.MYSQL_USER,

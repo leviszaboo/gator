@@ -89,6 +89,21 @@ export const createUserSchema = object({
  *      properties:
  *        user_id:
  *          type: string
+ *    GetUserByIdResponse:
+ *      type: object
+ *      properties:
+ *        user_id:
+ *          type: string
+ *        email:
+ *          type: string
+ *        email_verified:
+ *          type: integer
+ *          minimum: 0
+ *          maximum: 1
+ *        accessToken:
+ *          type: string
+ *        refreshToken:
+ *          type: string
  */
 const params = {
   params: object({
