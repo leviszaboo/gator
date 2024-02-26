@@ -1,0 +1,19 @@
+{
+  "name": "gator",
+  "version": "1.0.0",
+  "description": "Gator is an authentication backend as a service for your web app.",
+  "author": "Levente Szabo",
+  "license": "MIT",
+  "devDependencies": {
+    "@commitlint/cli": "^18.6.1",
+    "@commitlint/config-conventional": "^18.6.2",
+    "husky": "^9.0.11",
+    "prettier": "3.2.5"
+  },
+  "scripts": {
+    "prepare": "husky || true"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
+  }
+}

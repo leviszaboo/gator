@@ -1,7 +1,11 @@
-version: '3'
+version: "3"
 services:
   nginx:
-      ports:
+    ports:
       - "80:80"
   node-app:
-    command: npm run start
+    build:
+      context: .
+      args:
+        - NODE_ENV=production
+    command: yarn start
