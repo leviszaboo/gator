@@ -16,107 +16,140 @@ import logger from "./utils/logger";
 
 export default function routes(app: Express) {
   /**
-   * @route GET /ping
-   * @desc Healthcheck endpoint
-   * @access Public
+   * @openapi
+   * /api/v1/ping:
+   *   get:
+   *     tag:
+   *       - "ping"
+   *     description: Returns pong if the server is running
+   *     responses:
+   *       200:
+   *        description: server is running
    */
-  app.get(
-    "/api/v1/ping", 
-    (_req: Request, res: Response) => {
-      logger.info("pong");
-      res.status(200).send("pong");
-    }
-  );
+  app.get("/api/v1/ping", (_req: Request, res: Response) => {
+    logger.info("pong");
+    res.status(200).send("pong");
+  });
 
   /**
-   * @route POST api/v1/users/register
-   * @desc Registers a user
-   * @access Public
+   * @openapi
+   * '/api/users/register':
+   *  post:
+   *     tags:
+   *     - User
+   *     summary: Register a user
+   *     requestBody:
+   *      required: true
+   *      content:
+   *        application/json:
+   *           schema:
+   *              $ref: '#/components/schemas/CreateUserInput'
+   *     responses:
+   *      200:
+   *        description: Success
+   *        content:
+   *          application/json:
+   *            schema:
+   *              $ref: '#/components/schemas/CreateUserResponse'
+   *      409:
+   *        description: Conflict
+   *      400:
+   *        description: Bad request
+   *      500:
+   *       description: Internal server error
    */
   app.post(
     "/api/v1/users/register",
     validateResource(createUserSchema),
-    createUserHandler
+    createUserHandler,
   );
 
   /**
-   * @route POST api/v1/users/login
-   * @desc Registers a user
-   * @access Public
+   * @openapi
+   * '/api/users/login':
+   *  post:
+   *     tags:
+   *     - User
+   *     summary: Login a user
+   *     requestBody:
+   *      required: true
+   *      content:
+   *        application/json:
+   *           schema:
+   *              $ref: '#/components/schemas/LoginUserInput'
+   *     responses:
+   *      200:
+   *        description: Success
+   *        content:
+   *          application/json:
+   *            schema:
+   *              $ref: '#/components/schemas/LoginUserResponse'
+   *      401:
+   *        description: Unauthorized
+   *      400:
+   *        description: Bad request
+   *      500:
+   *       description: Internal server error
    */
   app.post(
     "/api/v1/users/login",
     validateResource(loginUserSchema),
-    loginUserHandler
+    loginUserHandler,
   );
 
   /**
-   * @route GET api/v1/users/:user_id
-   * @desc Gets user by unique id
-   * @access Public
+   * @openapi
+   * '/api/users/{user_id}':
+   *  get:
+   *     tags:
+   *     - User
+   *     summary: Get a user by ID
+   *     parameters:
+   *     - in: path
+   *       name: user_id
+   *       required: true
+   *       schema:
+   *         type: string
+   *     responses:
+   *      200:
+   *        description: Success
+   *        content:
+   *          application/json:
+   *            schema:
+   *              $ref: '#/components/schemas/GetUserByIdResponse'
+   *      404:
+   *        description: Not found
+   *      400:
+   *        description: Bad request
+   *      500:
+   *       description: Internal server error
    */
   app.get(
     "/api/v1/users/:user_id",
     validateResource(getUserByIdSchema),
-    getUserByIdHandler
+    getUserByIdHandler,
   );
 
-  /**
-   * @route POST api/v1/users/logout
-   * @desc Logs out a user
-   * @access Private
-   */
-  app.post(
-    "/api/v1/users/logout", 
-    requireUser, 
-    logOutUserHandler
-  );
+  app.put("/api/v1/users/:user_id/update-email");
+
+  app.put("/api/v1/users/:user_id/reset-password");
+
+  app.get("/api/v1/users/:user_id/verify-email");
+
+  app.delete("/api/v1/users/:user_id");
 
   /**
-   * @route PUT api/v1/users/:user_id/update-email
-   * @desc Updates a user's email
-   * @access Private
+   * @openapi
+   * '/api/tokens/invalidate-token':
+   *  post:
+   *     tags:
+   *     - Tokens
+   *     summary: Invalidate a token
+   *     responses:
+   *      200:
+   *        description: Success
+   *      500:
+   *       description: Internal server error
    */
-  app.put(
-    "/api/v1/users/:user_id/update-email"
-  )
-  
-  /**
-   * @route PUT api/v1/users/:user_id/reset-password
-   * @desc Resets a user's password
-   * @access Private
-   */
-  app.put(
-    "/api/v1/users/:user_id/reset-password"
-  )
-
-  /**
-   * @route GET api/v1/users/:user_id/verify-email
-   * @desc Verifies a user's email
-   * @access Private
-   */
-  app.get(
-    "/api/v1/users/:user_id/verify-email"
-  )
-
-  /**
-   * @route DELETE api/v1/users/:user_id
-   * @desc Deletes a user
-   * @access Private
-   */
-  app.delete(
-    "/api/v1/users/:user_id"
-  );
-
-  /**
-   * @route GET api/v1/test-auth
-   * @desc Tests authentication functionality
-   * @access Private
-   */
-  app.get(
-    "/api/v1/test-auth", 
-    requireUser, 
-    (_req: Request, res: Response) =>
-      res.sendStatus(200)
-  );
+  app.post("/api/v1/tokens/invalidate-token", requireUser, logOutUserHandler);
 }

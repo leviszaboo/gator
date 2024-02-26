@@ -3,13 +3,14 @@ import routes from "./routes";
 import logger from "./utils/logger";
 import createServer from "./utils/createServer";
 import { GracefulShutdownManager } from "@moebius/http-graceful-shutdown";
-import { Express } from "express";
 import { Server } from "http";
 import closeConnection from "./db/cleanup";
+import swaggerDocs from "./utils/swagger";
+import { exit } from "process";
 
 const port = config.get<number>("port");
 
-const shutdownSignals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];
+const shutdownSignals: NodeJS.Signals[] = ["SIGINT", "SIGTERM", "SIGHUP"];
 
 function gracefulShutdown(
   server: Server,
@@ -20,7 +21,7 @@ function gracefulShutdown(
   closeConnection();
   shutdownManager.terminate(() => {
     logger.info("Server is gracefully terminated");
-    process.exit(0);
+    exit(0);
   });
 }
 
@@ -30,6 +31,9 @@ async function startServer() {
   const server = app.listen(port, () => {
     logger.info(`App is running on http://localhost:${port}`);
     logger.info(`Initializing MySQL connection...`);
+
+    swaggerDocs(app, port);
+
     routes(app);
   });
 
