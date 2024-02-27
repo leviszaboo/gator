@@ -82,12 +82,52 @@ export const createUserSchema = object({
  * @openapi
  * components:
  *  schemas:
+ *    UpdateEmailInput:
+ *      type: object
+ *      required:
+ *        - newEmail
+ *      properties:
+ *        newEmail:
+ *          type: string
+ */
+export const updateEmailSchema = object({
+  body: object({
+    newEmail: string({
+      required_error: "New email is a required field.",
+    }).email("Please enter a valid email adress"),
+  }),
+});
+
+/**
+ * @openapi
+ * components:
+ *  schemas:
+ *    UpdatePasswordInput:
+ *      type: object
+ *      required:
+ *        - newPassword
+ *      properties:
+ *        newPassword:
+ *          type: string
+ */
+export const updatePasswordSchema = object({
+  body: object({
+    newPassword: string({
+      required_error: "New password is a required field.",
+    }).min(8, "Password must be at least 8 characters long."),
+  }),
+});
+
+/**
+ * @openapi
+ * components:
+ *  schemas:
  *    GetUserByIdInput:
  *      type: object
  *      required:
- *        - user_id
+ *        - userId
  *      properties:
- *        user_id:
+ *        userId:
  *          type: string
  *    GetUserByIdResponse:
  *      type: object
@@ -107,7 +147,7 @@ export const createUserSchema = object({
  */
 const params = {
   params: object({
-    user_id: string({
+    userId: string({
       required_error: "User ID is required.",
     }),
   }),
@@ -118,3 +158,5 @@ export const getUserByIdSchema = object({ ...params });
 export type GetUserByIdInput = TypeOf<typeof getUserByIdSchema>;
 export type LoginUserInput = TypeOf<typeof loginUserSchema>;
 export type CreateUserInput = TypeOf<typeof createUserSchema>;
+export type UpdateEmailInput = TypeOf<typeof updateEmailSchema>;
+export type UpdatePasswordInput = TypeOf<typeof updatePasswordSchema>;

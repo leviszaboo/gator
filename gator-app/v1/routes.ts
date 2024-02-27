@@ -1,13 +1,18 @@
 import { Express, Request, Response } from "express";
 import {
   createUserHandler,
+  deleteUserHandler,
   getUserByIdHandler,
   loginUserHandler,
+  updateEmailHandler,
+  updatePasswordHandler,
 } from "./controller/user.controller";
 import {
   createUserSchema,
   getUserByIdSchema,
   loginUserSchema,
+  updateEmailSchema,
+  updatePasswordSchema,
 } from "./schema/user.schema";
 import {
   invalidateTokenHandler,
@@ -109,14 +114,14 @@ export default function routes(app: Express) {
 
   /**
    * @openapi
-   * '/api/users/{user_id}':
+   * '/api/users/{userId}':
    *  get:
    *     tags:
    *     - User
    *     summary: Get a user by ID
    *     parameters:
    *     - in: path
-   *       name: user_id
+   *       name: userId
    *       required: true
    *       schema:
    *         type: string
@@ -137,18 +142,119 @@ export default function routes(app: Express) {
    *       description: Internal server error
    */
   app.get(
-    "/api/v1/users/:user_id",
+    "/api/v1/users/:userId",
     validateResource(getUserByIdSchema),
     getUserByIdHandler,
   );
 
-  app.put("/api/v1/users/:user_id/update-email");
+  /**
+   * @openapi
+   * '/api/users/{userId}/update-email':
+   *   put:
+   *     tags:
+   *       - User
+   *     summary: Update a user's email
+   *     parameters:
+   *       - in: path
+   *         name: userId
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/UpdateEmailInput'
+   *     responses:
+   *       '204':
+   *         description: Success
+   *       '404':
+   *         description: Not found
+   *       '401':
+   *         description: Unauthorized
+   *       '400':
+   *         description: Bad request
+   *       '500':
+   *         description: Internal server error # This is a proper YAML comment
+   */
+  app.put(
+    "/api/v1/users/:userId/update-email",
+    validateResource(updateEmailSchema),
+    updateEmailHandler,
+  );
 
-  app.put("/api/v1/users/:user_id/reset-password");
+  /**
+   * @openapi
+   * '/api/users/{userId}/update-password':
+   *   put:
+   *     tags:
+   *       - User
+   *     summary: Update a user's password
+   *     parameters:
+   *       - in: path
+   *         name: userId
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/UpdatePasswordInput'
+   *     responses:
+   *       '204':
+   *         description: Success
+   *       '404':
+   *         description: Not found
+   *       '401':
+   *         description: Unauthorized
+   *       '400':
+   *         description: Bad request
+   *       '500':
+   *         description: Internal server error
+   */
+  app.put(
+    "/api/v1/users/:userId/update-password",
+    validateResource(updatePasswordSchema),
+    updatePasswordHandler,
+  );
 
-  app.get("/api/v1/users/:user_id/verify-email");
+  app.post("/api/v1/users/:userId/send-verification-email");
 
-  app.delete("/api/v1/users/:user_id");
+  app.put("/api/v1/users/:userId/verify-email");
+
+  /**
+   * @openapi
+   * '/api/users/{userId}':
+   *   delete:
+   *     tags:
+   *       - User
+   *     summary: Delete a user
+   *     parameters:
+   *       - in: path
+   *         name: userId
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       '204':
+   *         description: Success
+   *       '404':
+   *         description: Not found
+   *       '401':
+   *         description: Unauthorized
+   *       '400':
+   *         description: Bad request
+   *       '500':
+   *         description: Internal server error
+   */
+  app.delete(
+    "/api/v1/users/:userId",
+    validateResource(getUserByIdSchema),
+    deleteUserHandler,
+  );
 
   /**
    * @openapi

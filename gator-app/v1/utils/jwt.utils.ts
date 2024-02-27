@@ -4,14 +4,14 @@ import config from "config";
 import { checkBlackListedToken } from "../service/token.service";
 
 const accessTokenPrivateKey = config.get<string>(
-  "JWT.jwtAccessTokenPrivateKey",
+  "jwt.jwtAccessTokenPrivateKey",
 );
-const accessTokenPublicKey = config.get<string>("JWT.jwtAccessTokenPublicKey");
+const accessTokenPublicKey = config.get<string>("jwt.jwtAccessTokenPublicKey");
 const refreshTokenPrivateKey = config.get<string>(
-  "JWT.jwtRefreshTokenPrivateKey",
+  "jwt.jwtRefreshTokenPrivateKey",
 );
 const refreshTokenPublicKey = config.get<string>(
-  "JWT.jwtRefreshTokenPrivateKey",
+  "jwt.jwtRefreshTokenPrivateKey",
 );
 
 interface UserPayload extends JwtPayload {
