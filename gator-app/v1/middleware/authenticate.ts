@@ -6,12 +6,8 @@ export default function authenticate(
   res: Response,
   next: NextFunction,
 ) {
-  const apiKey = req.headers["x-api-key"];
-  const appId = req.headers["x-app-id"];
-
-  if (true) {
-    return next();
-  }
+  const apiKey = req.headers["X-Gator-Api-Key"];
+  const appId = req.headers["X-Gator-App-Id"];
 
   if (!apiKey) {
     return res.status(401).send("Missing API Key.");

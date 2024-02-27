@@ -44,7 +44,7 @@ export default function routes(app: Express) {
 
   /**
    * @openapi
-   * '/api/users/register':
+   * '/api/users/sign-up':
    *  post:
    *     tags:
    *     - User
@@ -72,7 +72,7 @@ export default function routes(app: Express) {
    *       description: Internal server error
    */
   app.post(
-    "/api/v1/users/register",
+    "/api/v1/users/sign-up",
     validateResource(createUserSchema),
     createUserHandler,
   );
