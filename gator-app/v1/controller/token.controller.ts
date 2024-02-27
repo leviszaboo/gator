@@ -30,13 +30,6 @@ export async function reissueAccessTokenHandler(
       return res.status(401).send("Unsuccessful reissue of access token.");
     }
 
-    res.setHeader("Authorization", `Bearer ${newAccessToken}`);
-    res.cookie("refreshToken", newRefreshToken, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-    });
-
     return res.send({ newAccessToken, newRefreshToken });
   } catch (err: any) {
     logger.error(err);

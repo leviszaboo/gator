@@ -8,6 +8,10 @@ export class Auth extends Base {
     super(gatorConfig);
   }
 
+  get _config() {
+    return this.gatorConfig;
+  }
+
   createUser(email: string, password: string) {}
 
   loginUser(email: string, password: string) {}

@@ -44,9 +44,6 @@ export async function loginUserHandler(
   try {
     const { user, accessToken, refreshToken } = await loginUser(req.body);
 
-    res.setHeader("Authorization", `Bearer ${accessToken}`);
-    setTokenCookie(res, refreshToken, "refresh");
-
     return res.send({ user, accessToken, refreshToken });
   } catch (err: any) {
     if (err instanceof UserNotFoundError) {

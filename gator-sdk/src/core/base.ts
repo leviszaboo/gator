@@ -6,6 +6,7 @@ type GatorConfig = {
 
 export abstract class Base {
   protected gatorConfig: GatorConfig;
+
   constructor(gatorConfig: GatorConfig) {
     this.gatorConfig = gatorConfig;
   }
