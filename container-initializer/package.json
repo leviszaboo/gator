@@ -1,0 +1,27 @@
+{
+  "name": "container-initializer",
+  "version": "1.0.0",
+  "description": "Conatiner initializer service for Gator",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/src/app.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/app.ts"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "config": "^3.3.11",
+    "dayjs": "^1.11.10",
+    "dotenv": "^16.4.5",
+    "pino": "^8.19.0",
+    "pino-pretty": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.5",
+    "@types/config": "^3.3.4",
+    "@types/node": "^20.11.30",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.3"
+  }
+}

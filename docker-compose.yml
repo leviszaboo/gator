@@ -1,0 +1,23 @@
+version: "3"
+services:
+  message-bus:
+    image: rabbitmq:3-alpine
+    ports:
+      - 5672:5672
+      - 15672:15672
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 1s
+      timeout: 30s
+      retries: 30
+
+  container-initializer:
+    build:
+      context: container-initializer
+    env_file:
+      - container-initializer/.env
+    depends_on:
+      message-bus:
+        condition: service_healthy
+
+    command: yarn start
