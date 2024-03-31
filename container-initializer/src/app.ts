@@ -1,5 +1,7 @@
 import mqConnection from "./utils/rabbitMqConnection";
 
+const shutdownSignals: NodeJS.Signals[] = ["SIGINT", "SIGTERM", "SIGQUIT"];
+
 const handleIncoming = (msg: string) => {
   try {
     const parsedMessage = JSON.parse(msg);
@@ -12,10 +14,22 @@ const handleIncoming = (msg: string) => {
   }
 };
 
-const startServer = async () => {
+const startService = async () => {
   await mqConnection.connect();
 
   await mqConnection.consume(handleIncoming);
 };
 
-startServer();
+const shutdownService = async () => {
+  await mqConnection.close();
+};
+
+startService();
+
+shutdownSignals.forEach((signal) => {
+  process.on(signal, async () => {
+    console.log(`Received ${signal}, shutting down gracefully`);
+    await shutdownService();
+    process.exit(0);
+  });
+});

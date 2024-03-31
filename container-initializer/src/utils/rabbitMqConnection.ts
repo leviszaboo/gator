@@ -9,11 +9,11 @@ const rmqUrl = config.get<string>("rmqUrl");
 const INITIALIZER_QUEUE = config.get<string>("INITIALIZER_QUEUE");
 
 class RabbitMQConnection {
-  connection!: Connection;
-  channel!: Channel;
-  private connected!: Boolean;
+  private connection: Connection | null = null;
+  private channel: Channel | null = null;
+  private connected: boolean = false;
 
-  async connect(retryCount = 5, retryDelay = 5000) {
+  async connect(retryCount = 5, retryDelay = 3000) {
     if (this.connected && this.channel) return;
 
     let attempts = 0;
@@ -51,6 +51,11 @@ class RabbitMQConnection {
   }
 
   async consume(handleIncomingNotification: HandlerCB) {
+    if (!this.channel) {
+      logger.error("Channel is not available.");
+      return;
+    }
+
     await this.channel.assertQueue(INITIALIZER_QUEUE, {
       durable: true,
     });
@@ -63,13 +68,19 @@ class RabbitMQConnection {
             return logger.error(`Invalid incoming message`);
           }
           handleIncomingNotification(msg?.content?.toString());
-          this.channel.ack(msg);
+          this.channel!.ack(msg);
         }
       },
       {
         noAck: false,
       },
     );
+  }
+
+  async close(): Promise<void> {
+    if (this.channel) await this.channel.close();
+    if (this.connection) await this.connection.close();
+    this.connected = false;
   }
 }
 

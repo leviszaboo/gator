@@ -7,9 +7,9 @@ services:
       - 15672:15672
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
-      interval: 1s
+      interval: 10s
       timeout: 30s
-      retries: 30
+      retries: 5
 
   container-initializer:
     build:
