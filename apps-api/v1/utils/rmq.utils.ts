@@ -10,10 +10,16 @@ class RabbitMQConnection {
   private channel: Channel | null = null;
   private connected: boolean = false;
 
-  async connect(retryCount = 5, retryDelay = 3000) {
+  private disconnecting: boolean = false;
+
+  async connect(
+    retryCount: number = 5,
+    initialRetryDelay: number = 1000,
+  ): Promise<void> {
     if (this.connected && this.channel) return;
 
     let attempts = 0;
+    let retryDelay = initialRetryDelay;
 
     while (attempts < retryCount) {
       try {
@@ -27,6 +33,8 @@ class RabbitMQConnection {
         this.channel = await this.connection.createChannel();
         logger.info(`Created RabbitMQ Channel successfully`);
 
+        this.setupEventListeners();
+
         this.connected = true;
         return;
       } catch (error) {
@@ -38,42 +46,116 @@ class RabbitMQConnection {
         attempts++;
         if (attempts < retryCount) {
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          retryDelay *= 2;
         }
       }
     }
 
     logger.error(
-      `Failed to connect to RabbitMQ Server after ${retryCount} attempts`,
+      `Failed to connect to RabbitMQ Server after ${retryCount} attempts. Shutting down...`,
     );
+    process.exit(1);
   }
 
-  async sendToQueue(queue: string, message: any) {
-    try {
-      if (!this.channel) {
-        await this.connect();
+  private setupEventListeners(): void {
+    if (!this.connection) {
+      throw new Error(
+        "Connection is not established, cannot setup event listeners.",
+      );
+    }
+
+    this.connection.on("close", () => {
+      if (this.disconnecting) {
+        return;
       }
 
-      this.channel!.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
+      logger.warn(
+        "RabbitMQ connection closed unexpectedly. Attempting to reconnect...",
+      );
+      this.connected = false;
+      this.connect().catch((err) => logger.error("Reconnection failed", err));
+    });
+
+    this.connection.on("error", (error) => {
+      logger.error("RabbitMQ connection error:", error);
+    });
+
+    if (!this.channel) {
+      throw new Error(
+        "Channel is not established, cannot setup event listeners.",
+      );
+    }
+
+    this.channel.on("error", (error) => {
+      logger.error("RabbitMQ channel error:", error);
+    });
+
+    this.channel.on("close", () => {
+      if (this.disconnecting) {
+        return;
+      }
+
+      logger.warn(
+        "RabbitMQ channel closed unexpectedly. Attempting to reconnect...",
+      );
+
+      this.connected = false;
+
+      this.connect().catch((err) => logger.error("Reconnection failed", err));
+    });
+  }
+
+  async sendToQueue<T>(queue: string, message: T): Promise<void> {
+    try {
+      if (!this.channel) {
+        throw new Error("Channel is not initialized.");
+      }
+
+      await this.channel.assertQueue(queue, {
+        durable: true,
+      });
+
+      this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
+        persistent: true,
+      });
     } catch (error) {
       logger.error(error);
       throw error;
     }
   }
 
-  async close() {
-    if (this.channel) {
-      await this.channel.close();
-    }
+  async close(): Promise<void> {
+    try {
+      if (this.disconnecting) {
+        return;
+      }
 
-    if (this.connection) {
-      await this.connection.close();
-    }
+      this.disconnecting = true;
 
-    this.connected = false;
+      if (this.channel) {
+        await this.channel.close();
+      }
+
+      if (this.connection) {
+        await this.connection.close();
+      }
+
+      this.connected = false;
+      this.disconnecting = false;
+    } catch (error) {
+      logger.error(error);
+      this.disconnecting = false;
+
+      throw error;
+    } finally {
+      logger.info("RabbitMQ Connection closed successfully");
+    }
   }
 }
 
-export const sendInitializerMessage = async (message: InitializerMessage) => {
+export const sendInitializerMessage = async (
+  message: InitializerMessage,
+): Promise<void> => {
   try {
     await mqConnection.sendToQueue(INITIALIZER_QUEUE, message);
   } catch (err) {
