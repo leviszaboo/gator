@@ -1,12 +1,10 @@
 import client, { Connection, Channel } from "amqplib";
-import config from "config";
 import logger from "./logger";
-import { warn } from "console";
+import { HandlerCB } from "../types/rmq.types";
+import { Config } from "./options";
+import { InitializerMessageSchema } from "../schema/initializerMessage.schema";
 
-type HandlerCB = (msg: string) => any;
-
-const rmqUrl = config.get<string>("rmqUrl");
-const INITIALIZER_QUEUE = config.get<string>("INITIALIZER_QUEUE");
+const { RMQ_URL, INITIALIZER_QUEUE } = Config;
 
 class RabbitMQConnection {
   private connection: Connection | null = null;
@@ -24,7 +22,7 @@ class RabbitMQConnection {
           `Attempting to connect to RabbitMQ Server (Attempt ${attempts + 1})`,
         );
 
-        this.connection = await client.connect(rmqUrl);
+        this.connection = await client.connect(RMQ_URL);
         logger.info(`Rabbit MQ Connection is ready`);
 
         this.channel = await this.connection.createChannel();
@@ -50,7 +48,7 @@ class RabbitMQConnection {
     );
   }
 
-  async consume(handleIncomingNotification: HandlerCB) {
+  async consume(handleIncoming: HandlerCB) {
     if (!this.channel) {
       logger.error("Channel is not available.");
       return;
@@ -62,13 +60,13 @@ class RabbitMQConnection {
 
     this.channel.consume(
       INITIALIZER_QUEUE,
-      (msg) => {
+      (message) => {
         {
-          if (!msg) {
+          if (!message) {
             return logger.error(`Invalid incoming message`);
           }
-          handleIncomingNotification(msg?.content?.toString());
-          this.channel!.ack(msg);
+          handleIncoming(message.content);
+          this.channel!.ack(message);
         }
       },
       {
@@ -83,6 +81,19 @@ class RabbitMQConnection {
     this.connected = false;
   }
 }
+
+export const handleIncoming = (message: Buffer) => {
+  try {
+    const messageObject = JSON.parse(message.toString());
+
+    const validMessage = InitializerMessageSchema.parse(messageObject);
+
+    logger.info(`Received Instruction`, validMessage);
+  } catch (error) {
+    logger.error(`Error While Parsing the message`);
+    logger.error(error);
+  }
+};
 
 const mqConnection = new RabbitMQConnection();
 

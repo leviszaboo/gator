@@ -1,18 +1,6 @@
-import mqConnection from "./utils/rabbitMqConnection";
+import mqConnection, { handleIncoming } from "./utils/rmq.utils";
 
 const shutdownSignals: NodeJS.Signals[] = ["SIGINT", "SIGTERM", "SIGQUIT"];
-
-const handleIncoming = (msg: string) => {
-  try {
-    const parsedMessage = JSON.parse(msg);
-
-    console.log(`Received Notification`, parsedMessage);
-
-    // Implement your own notification flow
-  } catch (error) {
-    console.error(`Error While Parsing the message`);
-  }
-};
 
 const startService = async () => {
   await mqConnection.connect();
