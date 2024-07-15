@@ -130,6 +130,8 @@ class RabbitMQConnection {
   }
 
   async sendToQueue<T>(queue: string, message: T): Promise<void> {
+    logger.info(`Sending message: ${message} to queue: ${queue}`);
+
     try {
       if (!this.channel) {
         throw new Error("Channel is not initialized.");
@@ -177,7 +179,7 @@ class RabbitMQConnection {
   }
 }
 
-export const handleIncoming = (message: Buffer) => {
+export const handleIncoming = async (message: Buffer) => {
   const messageObject = JSON.parse(message.toString());
 
   const validMessage = InitializerMessageSchema.parse(messageObject);
@@ -185,14 +187,22 @@ export const handleIncoming = (message: Buffer) => {
   if (validMessage) {
     logger.info(`Received Instruction`, validMessage);
 
-    publishContainer(validMessage);
+    await publishContainer(validMessage);
   } else {
     return logger.error(`Invalid Message Received`);
   }
 };
 
-export const publishToStatusQueue = (message: StatusMessage) => {
-  return mqConnection.sendToQueue(STATUS_QUEUE, message);
+export const publishToStatusQueue = async (
+  message: StatusMessage,
+): Promise<void> => {
+  try {
+    await mqConnection.sendToQueue(STATUS_QUEUE, message);
+  } catch (err) {
+    logger.error(err);
+
+    throw err;
+  }
 };
 
 const mqConnection = new RabbitMQConnection();

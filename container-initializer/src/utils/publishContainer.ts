@@ -17,7 +17,7 @@ export const publishContainer = async ({
 
   await ecsClient.send(command);
 
-  publishToStatusQueue({
+  await publishToStatusQueue({
     userId,
     apiKey,
     appName,
