@@ -1,7 +1,7 @@
 import { InitializerMessage } from "../types/rmq.types";
 import ecsClient from "../aws/ecsClient";
 import generateInitializerTaskCommand from "../aws/initializerTaskCommand";
-import mqConnection from "./rmq.utils";
+import { publishToStatusQueue } from "./rmq.utils";
 import logger from "./logger";
 
 export const publishContainer = async ({
@@ -15,9 +15,9 @@ export const publishContainer = async ({
     appId,
   });
 
-  ecsClient.send(command);
+  await ecsClient.send(command);
 
-  mqConnection.publishToStatusQueue({
+  publishToStatusQueue({
     userId,
     apiKey,
     appName,
