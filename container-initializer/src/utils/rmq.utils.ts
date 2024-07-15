@@ -3,6 +3,7 @@ import logger from "./logger";
 import { HandlerCB } from "../types/rmq.types";
 import { Config } from "./options";
 import { InitializerMessageSchema } from "../schema/initializerMessage.schema";
+import { publishContainer } from "./publishContainer";
 
 const { RMQ_URL, INITIALIZER_QUEUE } = Config;
 
@@ -10,11 +11,13 @@ class RabbitMQConnection {
   private connection: Connection | null = null;
   private channel: Channel | null = null;
   private connected: boolean = false;
+  private disconnecting: boolean = false;
 
-  async connect(retryCount = 5, retryDelay = 3000) {
+  async connect(retryCount = 5, initialRetryDelay = 1000) {
     if (this.connected && this.channel) return;
 
     let attempts = 0;
+    let retryDelay = initialRetryDelay;
 
     while (attempts < retryCount) {
       try {
@@ -28,6 +31,8 @@ class RabbitMQConnection {
         this.channel = await this.connection.createChannel();
         logger.info(`Created RabbitMQ Channel successfully`);
 
+        this.setupEventListeners();
+
         this.connected = true;
         return;
       } catch (error) {
@@ -39,6 +44,7 @@ class RabbitMQConnection {
         attempts++;
         if (attempts < retryCount) {
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          retryDelay *= 2;
         }
       }
     }
@@ -46,6 +52,54 @@ class RabbitMQConnection {
     logger.error(
       `Failed to connect to RabbitMQ Server after ${retryCount} attempts`,
     );
+  }
+
+  private setupEventListeners(): void {
+    if (!this.connection) {
+      throw new Error(
+        "Connection is not established, cannot setup event listeners.",
+      );
+    }
+
+    this.connection.on("close", () => {
+      if (this.disconnecting) {
+        return;
+      }
+
+      logger.warn(
+        "RabbitMQ connection closed unexpectedly. Attempting to reconnect...",
+      );
+      this.connected = false;
+      this.connect().catch((err) => logger.error("Reconnection failed", err));
+    });
+
+    this.connection.on("error", (error) => {
+      logger.error("RabbitMQ connection error:", error);
+    });
+
+    if (!this.channel) {
+      throw new Error(
+        "Channel is not established, cannot setup event listeners.",
+      );
+    }
+
+    this.channel.on("error", (error) => {
+      logger.error("RabbitMQ channel error:", error);
+    });
+
+    this.channel.on("close", () => {
+      if (this.disconnecting) {
+        return;
+      }
+
+      logger.warn(
+        "RabbitMQ channel closed unexpectedly. Attempting to reconnect...",
+      );
+
+      this.connected = false;
+
+      this.connect().catch((err) => logger.error("Reconnection failed", err));
+    });
   }
 
   async consume(handleIncoming: HandlerCB) {
@@ -76,22 +130,45 @@ class RabbitMQConnection {
   }
 
   async close(): Promise<void> {
-    if (this.channel) await this.channel.close();
-    if (this.connection) await this.connection.close();
-    this.connected = false;
+    try {
+      if (this.disconnecting) {
+        return;
+      }
+
+      this.disconnecting = true;
+
+      if (this.channel) {
+        await this.channel.close();
+      }
+
+      if (this.connection) {
+        await this.connection.close();
+      }
+
+      this.connected = false;
+      this.disconnecting = false;
+    } catch (error) {
+      logger.error(error);
+      this.disconnecting = false;
+
+      throw error;
+    } finally {
+      logger.info("RabbitMQ Connection closed successfully");
+    }
   }
 }
 
 export const handleIncoming = (message: Buffer) => {
-  try {
-    const messageObject = JSON.parse(message.toString());
+  const messageObject = JSON.parse(message.toString());
 
-    const validMessage = InitializerMessageSchema.parse(messageObject);
+  const validMessage = InitializerMessageSchema.parse(messageObject);
 
+  if (validMessage) {
     logger.info(`Received Instruction`, validMessage);
-  } catch (error) {
-    logger.error(`Error While Parsing the message`);
-    logger.error(error);
+
+    publishContainer(validMessage);
+  } else {
+    return logger.error(`Invalid Message Received`);
   }
 };
 
