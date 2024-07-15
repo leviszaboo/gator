@@ -2,13 +2,20 @@ import { KeyValuePair, RunTaskCommand } from "@aws-sdk/client-ecs";
 import { Config } from "../utils/options";
 import { InitializerMessage } from "../types/rmq.types";
 import { generateEnvironment } from "../utils/ecs.utils";
+import { v4 as uuid } from "uuid";
 
 const generateInitializerTaskCommand = ({
   userId,
   appName,
   appId,
-}: InitializerMessage): RunTaskCommand => {
+}: InitializerMessage): {
+  apiKey: string;
+  command: RunTaskCommand;
+} => {
+  const apiKey = uuid();
+
   const environment: KeyValuePair[] = generateEnvironment({
+    apiKey,
     userId,
     appName,
     appId,
@@ -40,7 +47,7 @@ const generateInitializerTaskCommand = ({
     },
   });
 
-  return command;
+  return { apiKey, command };
 };
 
 export default generateInitializerTaskCommand;

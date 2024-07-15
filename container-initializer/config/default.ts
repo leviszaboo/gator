@@ -3,6 +3,7 @@ import "dotenv/config";
 export default {
   RMQ_URL: process.env.RMQ_URL,
   INITIALIZER_QUEUE: process.env.INITIALIZER_QUEUE,
+  STATUS_QUEUE: process.env.STATUS_QUEUE,
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
   ECS_CLUSTER: process.env.ECS_CLUSTER,

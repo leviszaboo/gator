@@ -4,13 +4,16 @@ import { KeyValuePair } from "@aws-sdk/client-ecs";
 import { v4 as uuid } from "uuid";
 import { Config } from "./options";
 
+type EnvArgs = {
+  apiKey: string;
+} & InitializerMessage;
+
 export const generateEnvironment = ({
   userId,
   appName,
   appId,
-}: InitializerMessage): KeyValuePair[] => {
-  const apiKey = uuid();
-
+  apiKey,
+}: EnvArgs): KeyValuePair[] => {
   const { publicKey: actPublicKey, privateKey: actPrivateKey } =
     generateKeyPairSync("rsa", {
       modulusLength: 4096,

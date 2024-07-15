@@ -3,6 +3,7 @@ import config from "config";
 export const Config = {
   RMQ_URL: config.get<string>("RMQ_URL"),
   INITIALIZER_QUEUE: config.get<string>("INITIALIZER_QUEUE"),
+  STATUS_QUEUE: config.get<string>("STATUS_QUEUE"),
   AWS_ACCESS_KEY: config.get<string>("AWS_ACCESS_KEY"),
   AWS_SECRET_ACCESS_KEY: config.get<string>("AWS_SECRET_ACCESS_KEY"),
   ECS_CLUSTER: config.get<string>("ECS_CLUSTER"),

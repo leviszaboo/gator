@@ -1,20 +1,31 @@
 import { InitializerMessage } from "../types/rmq.types";
 import ecsClient from "../aws/ecsClient";
 import generateInitializerTaskCommand from "../aws/initializerTaskCommand";
+import mqConnection from "./rmq.utils";
+import logger from "./logger";
 
-export const publishContainer = ({
+export const publishContainer = async ({
   userId,
   appName,
   appId,
 }: InitializerMessage) => {
-  console.log(`Publishing container for ${userId}, ${appName}, ${appId}`);
+  const { apiKey, command } = generateInitializerTaskCommand({
+    userId,
+    appName,
+    appId,
+  });
 
-  const command = generateInitializerTaskCommand({ userId, appName, appId });
+  ecsClient.send(command);
 
-  try {
-    const result = ecsClient.send(command);
-    console.log(result);
-  } catch (error) {
-    console.error(error);
-  }
+  mqConnection.publishToStatusQueue({
+    userId,
+    apiKey,
+    appName,
+    appId,
+    status: "PENDING",
+  });
+
+  logger.info(
+    `Container published for userId: ${userId}, appName: ${appName}, appId: ${appId}`,
+  );
 };

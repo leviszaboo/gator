@@ -1,11 +1,11 @@
 import client, { Connection, Channel } from "amqplib";
 import logger from "./logger";
-import { HandlerCB } from "../types/rmq.types";
+import { HandlerCB, StatusMessage } from "../types/rmq.types";
 import { Config } from "./options";
 import { InitializerMessageSchema } from "../schema/initializerMessage.schema";
 import { publishContainer } from "./publishContainer";
 
-const { RMQ_URL, INITIALIZER_QUEUE } = Config;
+const { RMQ_URL, INITIALIZER_QUEUE, STATUS_QUEUE } = Config;
 
 class RabbitMQConnection {
   private connection: Connection | null = null;
@@ -127,6 +127,23 @@ class RabbitMQConnection {
         noAck: false,
       },
     );
+  }
+
+  async publishToStatusQueue(message: StatusMessage) {
+    if (!this.channel) {
+      logger.error("Channel is not available.");
+      return;
+    }
+
+    await this.channel.assertQueue(STATUS_QUEUE, {
+      durable: true,
+    });
+
+    const messageBuffer = Buffer.from(JSON.stringify(message));
+
+    this.channel.sendToQueue(STATUS_QUEUE, messageBuffer, {
+      persistent: true,
+    });
   }
 
   async close(): Promise<void> {
