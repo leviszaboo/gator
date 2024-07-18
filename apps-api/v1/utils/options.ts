@@ -1,5 +1,14 @@
 import config from "config";
 
+export enum Models {
+  APPS = "apps",
+}
+
+export enum PrismaErrorCodes {
+  UNIQUE_CONSTRAINT_FAILED = "P2002",
+  RECORD_NOT_FOUND = "P2025",
+}
+
 export enum Endpoints {
   CREATE_AUTH_APP = "/api/v1/create-auth-app",
 }

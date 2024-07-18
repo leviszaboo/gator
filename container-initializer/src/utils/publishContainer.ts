@@ -1,8 +1,9 @@
 import { InitializerMessage } from "../types/rmq.types";
 import ecsClient from "../aws/ecsClient";
-import generateInitializerTaskCommand from "../aws/initializerTaskCommand";
-import { publishToStatusQueue } from "./rmq.utils";
+import { generateInitializerTaskCommand } from "./ecs.utils";
 import logger from "./logger";
+import { RunTaskCommandOutput } from "@aws-sdk/client-ecs";
+import { updateApp } from "../service/app.service";
 
 export const publishContainer = async ({
   userId,
@@ -15,17 +16,26 @@ export const publishContainer = async ({
     appId,
   });
 
-  await ecsClient.send(command);
+  const res: RunTaskCommandOutput = await ecsClient.send(command);
 
-  await publishToStatusQueue({
-    userId,
-    apiKey,
-    appName,
-    appId,
-    status: "PENDING",
-  });
+  if (!res.tasks || !res.tasks[0].taskArn) {
+    logger.error(
+      `Error publishing container for userId: ${userId}, appName: ${appName}, appId: ${appId}`,
+    );
+    return;
+  }
 
   logger.info(
     `Container published for userId: ${userId}, appName: ${appName}, appId: ${appId}`,
   );
+
+  const taskId = res.tasks[0].taskArn!.split("/").pop();
+
+  await updateApp({
+    appId,
+    status: "running",
+    url: "pending",
+    taskId: taskId,
+    apiKey,
+  });
 };

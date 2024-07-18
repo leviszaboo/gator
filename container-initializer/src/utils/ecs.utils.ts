@@ -1,19 +1,18 @@
 import { generateKeyPairSync } from "crypto";
 import { InitializerMessage } from "../types/rmq.types";
-import { KeyValuePair } from "@aws-sdk/client-ecs";
+import { KeyValuePair, RunTaskCommand } from "@aws-sdk/client-ecs";
 import { v4 as uuid } from "uuid";
 import { Config } from "./options";
 
-type EnvArgs = {
+type EcsEnvArgs = {
   apiKey: string;
-} & InitializerMessage;
+  appId: string;
+};
 
 export const generateEnvironment = ({
-  userId,
-  appName,
   appId,
   apiKey,
-}: EnvArgs): KeyValuePair[] => {
+}: EcsEnvArgs): KeyValuePair[] => {
   const { publicKey: actPublicKey, privateKey: actPrivateKey } =
     generateKeyPairSync("rsa", {
       modulusLength: 4096,
@@ -88,4 +87,52 @@ export const generateEnvironment = ({
   ];
 
   return environment;
+};
+
+export const generateInitializerTaskCommand = ({
+  userId,
+  appName,
+  appId,
+}: InitializerMessage): {
+  apiKey: string;
+  command: RunTaskCommand;
+} => {
+  const apiKey = uuid();
+
+  const environment: KeyValuePair[] = generateEnvironment({
+    apiKey,
+    appId,
+  });
+
+  const command = new RunTaskCommand({
+    cluster: Config.ECS_CLUSTER,
+    taskDefinition: Config.TASK_DEFINITION,
+    launchType: "FARGATE",
+    count: 1,
+    networkConfiguration: {
+      awsvpcConfiguration: {
+        subnets: [
+          "subnet-0b88c14e5d184b8f9",
+          "subnet-0c4f8bf8c7ca48835",
+          "subnet-01264f07de9ce4375",
+        ],
+        securityGroups: ["sg-07aa5cfbf0934c3a0"],
+        assignPublicIp: "ENABLED",
+      },
+    },
+    overrides: {
+      containerOverrides: [
+        {
+          name: "gator-app",
+          environment,
+        },
+      ],
+    },
+  });
+
+  return { apiKey, command };
+};
+
+export const getServiceUrl = (taskArn: string): string => {
+  return "";
 };

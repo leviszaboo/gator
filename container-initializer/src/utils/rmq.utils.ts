@@ -129,27 +129,6 @@ class RabbitMQConnection {
     );
   }
 
-  async sendToQueue<T>(queue: string, message: T): Promise<void> {
-    logger.info(`Sending message: ${message} to queue: ${queue}`);
-
-    try {
-      if (!this.channel) {
-        throw new Error("Channel is not initialized.");
-      }
-
-      await this.channel.assertQueue(queue, {
-        durable: true,
-      });
-
-      this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
-        persistent: true,
-      });
-    } catch (error) {
-      logger.error(error);
-      throw error;
-    }
-  }
-
   async close(): Promise<void> {
     try {
       if (this.disconnecting) {
@@ -190,18 +169,6 @@ export const handleIncoming = async (message: Buffer) => {
     await publishContainer(validMessage);
   } else {
     return logger.error(`Invalid Message Received`);
-  }
-};
-
-export const publishToStatusQueue = async (
-  message: StatusMessage,
-): Promise<void> => {
-  try {
-    await mqConnection.sendToQueue(STATUS_QUEUE, message);
-  } catch (err) {
-    logger.error(err);
-
-    throw err;
   }
 };
 

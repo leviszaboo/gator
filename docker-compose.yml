@@ -29,7 +29,28 @@ services:
     ports:
       - 3001:3001
     depends_on:
+      apps-db:
+        condition: service_healthy
       message-bus:
         condition: service_healthy
 
     command: yarn start
+
+  apps-db:
+    image: postgres
+    user: postgres
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db:/var/lib/postgresql/data
+      - "./apps-api/db-init/init.sql:/docker-entrypoint-initdb.d/init.sql"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db:
+    driver: local

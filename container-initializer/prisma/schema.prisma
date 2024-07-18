@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model apps {
+  app_id    String  @id @db.VarChar(255)
+  user_id   String  @db.VarChar(255)
+  app_name  String  @db.VarChar(255)
+  url       String? @db.VarChar(255)
+  status    String  @db.VarChar(255)
+  api_key   String  @db.VarChar(255)
+  task_id   String? @db.VarChar(255)
+}
