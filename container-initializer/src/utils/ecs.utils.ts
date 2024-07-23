@@ -3,6 +3,7 @@ import { InitializerMessage } from "../types/rmq.types";
 import { KeyValuePair, RunTaskCommand } from "@aws-sdk/client-ecs";
 import { v4 as uuid } from "uuid";
 import { Config } from "./options";
+import logger from "./logger";
 
 type EcsEnvArgs = {
   apiKey: string;
@@ -89,14 +90,7 @@ export const generateEnvironment = ({
   return environment;
 };
 
-export const generateInitializerTaskCommand = ({
-  userId,
-  appName,
-  appId,
-}: InitializerMessage): {
-  apiKey: string;
-  command: RunTaskCommand;
-} => {
+export const generateInitializerTaskCommand = (appId: string) => {
   const apiKey = uuid();
 
   const environment: KeyValuePair[] = generateEnvironment({
@@ -123,8 +117,17 @@ export const generateInitializerTaskCommand = ({
     overrides: {
       containerOverrides: [
         {
-          name: "gator-app",
+          name: "node-app-1",
           environment,
+        },
+        {
+          name: "postgres",
+          environment: [
+            {
+              name: "POSTGRES_PASSWORD",
+              value: Config.CONTAINER_POSTGRES_PASSWORD,
+            },
+          ],
         },
       ],
     },

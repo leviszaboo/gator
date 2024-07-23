@@ -10,11 +10,7 @@ export const publishContainer = async ({
   appName,
   appId,
 }: InitializerMessage) => {
-  const { apiKey, command } = generateInitializerTaskCommand({
-    userId,
-    appName,
-    appId,
-  });
+  const { apiKey, command } = generateInitializerTaskCommand(appId);
 
   const res: RunTaskCommandOutput = await ecsClient.send(command);
 
@@ -33,7 +29,7 @@ export const publishContainer = async ({
 
   await updateApp({
     appId,
-    status: "running",
+    status: "published",
     url: "pending",
     taskId: taskId,
     apiKey,
