@@ -11,6 +11,7 @@ export enum PrismaErrorCodes {
 
 export enum Endpoints {
   CREATE_AUTH_APP = "/api/v1/create-auth-app",
+  GET_AUTH_APP = "/api/v1/apps/:appId",
 }
 
 export const Config = {

@@ -1,10 +1,10 @@
 import { InitializerMessage, StatusMessage } from "../types/rmq.types";
-import { prismaCreateApp } from "../utils/prisma.utils";
+import { prismaCreateApp, getAppByUniqueKey } from "../utils/prisma.utils";
 import logger from "../utils/logger";
 import { snakeToCamelCase } from "./helpers/snakeToCamelCase";
 import { App } from "../types/app.types";
 import { PrismaErrorCodes } from "../utils/options";
-import { ConflictError, InternalServerError } from "../errors";
+import { ConflictError, InternalServerError, NotFoundError } from "../errors";
 
 export const createApp = async (input: InitializerMessage): Promise<App> => {
   const { userId, appName, appId } = input;
@@ -33,5 +33,23 @@ export const createApp = async (input: InitializerMessage): Promise<App> => {
     logger.error(err);
 
     throw new InternalServerError("An error occurred while creating the app.");
+  }
+};
+
+export const getApp = async (appId: string): Promise<App> => {
+  try {
+    const app = await getAppByUniqueKey({
+      app_id: appId,
+    });
+
+    if (!app) {
+      throw new NotFoundError(`App not found with ID: ${appId}`);
+    }
+
+    return snakeToCamelCase(app) as App;
+  } catch (err: any) {
+    logger.error(err);
+
+    throw new InternalServerError("An error occurred while getting the app.");
   }
 };

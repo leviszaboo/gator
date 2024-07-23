@@ -11,3 +11,4 @@ export type PrismaModels = {
 };
 
 export type CreateAppInput = Prisma.appsCreateInput;
+export type FindUniqueAppInput = Prisma.appsWhereUniqueInput;
