@@ -1,11 +1,11 @@
 import client, { Connection, Channel } from "amqplib";
 import logger from "./logger";
-import { HandlerCB } from "../types/rmq.types";
+import { HandlerCB, StatusMessage } from "../types/rmq.types";
 import { Config } from "./options";
 import { InitializerMessageSchema } from "../schema/initializerMessage.schema";
 import { publishContainer } from "./publishContainer";
 
-const { RMQ_URL, INITIALIZER_QUEUE } = Config;
+const { RMQ_URL, INITIALIZER_QUEUE, STATUS_QUEUE } = Config;
 
 class RabbitMQConnection {
   private connection: Connection | null = null;
@@ -158,7 +158,7 @@ class RabbitMQConnection {
   }
 }
 
-export const handleIncoming = (message: Buffer) => {
+export const handleIncoming = async (message: Buffer) => {
   const messageObject = JSON.parse(message.toString());
 
   const validMessage = InitializerMessageSchema.parse(messageObject);
@@ -166,7 +166,7 @@ export const handleIncoming = (message: Buffer) => {
   if (validMessage) {
     logger.info(`Received Instruction`, validMessage);
 
-    publishContainer(validMessage);
+    await publishContainer(validMessage);
   } else {
     return logger.error(`Invalid Message Received`);
   }

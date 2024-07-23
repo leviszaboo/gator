@@ -16,4 +16,18 @@ export const createAppSchema = object({
   }),
 });
 
+export const getAppSchema = object({
+  params: object({
+    appId: string({
+      required_error: "App ID is a required field.",
+    }).regex(
+      new RegExp(
+        /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/,
+      ),
+      "ID must be a valid UUID.",
+    ),
+  }),
+});
+
 export type CreateAppInput = TypeOf<typeof createAppSchema>;
+export type GetAppInput = TypeOf<typeof getAppSchema>;

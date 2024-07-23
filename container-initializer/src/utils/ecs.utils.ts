@@ -1,16 +1,19 @@
 import { generateKeyPairSync } from "crypto";
 import { InitializerMessage } from "../types/rmq.types";
-import { KeyValuePair } from "@aws-sdk/client-ecs";
+import { KeyValuePair, RunTaskCommand } from "@aws-sdk/client-ecs";
 import { v4 as uuid } from "uuid";
 import { Config } from "./options";
+import logger from "./logger";
+
+type EcsEnvArgs = {
+  apiKey: string;
+  appId: string;
+};
 
 export const generateEnvironment = ({
-  userId,
-  appName,
   appId,
-}: InitializerMessage): KeyValuePair[] => {
-  const apiKey = uuid();
-
+  apiKey,
+}: EcsEnvArgs): KeyValuePair[] => {
   const { publicKey: actPublicKey, privateKey: actPrivateKey } =
     generateKeyPairSync("rsa", {
       modulusLength: 4096,
@@ -85,4 +88,54 @@ export const generateEnvironment = ({
   ];
 
   return environment;
+};
+
+export const generateInitializerTaskCommand = (appId: string) => {
+  const apiKey = uuid();
+
+  const environment: KeyValuePair[] = generateEnvironment({
+    apiKey,
+    appId,
+  });
+
+  const command = new RunTaskCommand({
+    cluster: Config.ECS_CLUSTER,
+    taskDefinition: Config.TASK_DEFINITION,
+    launchType: "FARGATE",
+    count: 1,
+    networkConfiguration: {
+      awsvpcConfiguration: {
+        subnets: [
+          "subnet-0b88c14e5d184b8f9",
+          "subnet-0c4f8bf8c7ca48835",
+          "subnet-01264f07de9ce4375",
+        ],
+        securityGroups: ["sg-07aa5cfbf0934c3a0"],
+        assignPublicIp: "ENABLED",
+      },
+    },
+    overrides: {
+      containerOverrides: [
+        {
+          name: "node-app-1",
+          environment,
+        },
+        {
+          name: "postgres",
+          environment: [
+            {
+              name: "POSTGRES_PASSWORD",
+              value: Config.CONTAINER_POSTGRES_PASSWORD,
+            },
+          ],
+        },
+      ],
+    },
+  });
+
+  return { apiKey, command };
+};
+
+export const getServiceUrl = (taskArn: string): string => {
+  return "";
 };

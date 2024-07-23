@@ -1,8 +1,11 @@
 import { Express } from "express";
 import { Endpoints } from "./utils/options";
-import { createAuthAppHandler } from "./controller/app.controller";
+import {
+  createAuthAppHandler,
+  getAppHandler,
+} from "./controller/app.controller";
 import validateResource from "./middleware/validateResource";
-import { createAppSchema } from "./schema/app.schema";
+import { createAppSchema, getAppSchema } from "./schema/app.schema";
 
 export default function routes(app: Express) {
   app.get("/", (req, res) => {
@@ -13,5 +16,11 @@ export default function routes(app: Express) {
     Endpoints.CREATE_AUTH_APP,
     validateResource(createAppSchema),
     createAuthAppHandler,
+  );
+
+  app.get(
+    Endpoints.GET_AUTH_APP,
+    validateResource(getAppSchema),
+    getAppHandler,
   );
 }
