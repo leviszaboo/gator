@@ -1,9 +1,7 @@
 import { generateKeyPairSync } from "crypto";
-import { InitializerMessage } from "../types/rmq.types";
 import { KeyValuePair, RunTaskCommand } from "@aws-sdk/client-ecs";
 import { v4 as uuid } from "uuid";
 import { Config } from "./options";
-import logger from "./logger";
 
 type EcsEnvArgs = {
   apiKey: string;
@@ -110,7 +108,7 @@ export const generateInitializerTaskCommand = (appId: string) => {
           "subnet-0c4f8bf8c7ca48835",
           "subnet-01264f07de9ce4375",
         ],
-        securityGroups: ["sg-07aa5cfbf0934c3a0"],
+        securityGroups: ["sg-086878988150f6a62"],
         assignPublicIp: "ENABLED",
       },
     },
@@ -134,8 +132,4 @@ export const generateInitializerTaskCommand = (appId: string) => {
   });
 
   return { apiKey, command };
-};
-
-export const getServiceUrl = (taskArn: string): string => {
-  return "";
 };

@@ -1,8 +1,9 @@
 {
-  "name": "container-initializer",
+  "name": "url-service",
   "version": "1.0.0",
-  "description": "Conatiner initializer service for Gator",
+  "description": "URL creation service for Gator Auth Apps.",
   "main": "index.js",
+  "author": "Levente Szabo",
   "license": "MIT",
   "scripts": {
     "build": "tsc",
@@ -11,10 +12,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-ecs": "^3.614.0",
+    "@aws-sdk/client-elastic-load-balancing-v2": "^3.614.0",
     "@prisma/client": "^5.16.2",
-    "amqplib": "^0.10.3",
     "config": "^3.3.11",
-    "crypto": "^1.0.1",
     "dayjs": "^1.11.10",
     "dotenv": "^16.4.5",
     "pino": "^8.19.0",
@@ -24,7 +24,6 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/amqplib": "^0.10.5",
     "@types/config": "^3.3.4",
     "@types/node": "^20.11.30",
     "@types/uuid": "^10.0.0",

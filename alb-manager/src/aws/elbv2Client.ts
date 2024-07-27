@@ -2,7 +2,7 @@ import { ElasticLoadBalancingV2Client } from "@aws-sdk/client-elastic-load-balan
 import { Config } from "../utils/options";
 
 const elbv2Client = new ElasticLoadBalancingV2Client({
-  region: "eu-north-1",
+  region: Config.AWS_REGION,
   credentials: {
     accessKeyId: Config.AWS_ACCESS_KEY,
     secretAccessKey: Config.AWS_SECRET_ACCESS_KEY,

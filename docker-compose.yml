@@ -18,6 +18,19 @@ services:
     depends_on:
       message-bus:
         condition: service_healthy
+      apps-db:
+        condition: service_healthy
+
+    command: yarn start
+
+  alb-manager:
+    build:
+      context: alb-manager
+    env_file:
+      - alb-manager/.env
+    depends_on:
+      apps-db:
+        condition: service_healthy
 
     command: yarn start
 
