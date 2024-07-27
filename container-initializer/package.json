@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-ecs": "^3.614.0",
-    "@aws-sdk/client-elastic-load-balancing-v2": "^3.614.0",
     "@prisma/client": "^5.16.2",
     "amqplib": "^0.10.3",
     "config": "^3.3.11",

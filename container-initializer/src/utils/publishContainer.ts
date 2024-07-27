@@ -21,17 +21,24 @@ export const publishContainer = async ({
     return;
   }
 
+  const taskId = res.tasks[0].taskArn!.split("/").pop();
+
+  if (!taskId) {
+    logger.error(
+      `Error publishing container for userId: ${userId}, appName: ${appName}, appId: ${appId}`,
+    );
+    return;
+  }
+
   logger.info(
     `Container published for userId: ${userId}, appName: ${appName}, appId: ${appId}`,
   );
-
-  const taskId = res.tasks[0].taskArn!.split("/").pop();
 
   await updateApp({
     appId,
     status: "published",
     url: "pending",
-    taskId: taskId,
+    taskId,
     apiKey,
   });
 };
