@@ -10,6 +10,7 @@ export const Config = {
   STATUS_QUEUE: config.get<string>("STATUS_QUEUE"),
   AWS_ACCESS_KEY: config.get<string>("AWS_ACCESS_KEY"),
   AWS_SECRET_ACCESS_KEY: config.get<string>("AWS_SECRET_ACCESS_KEY"),
+  AWS_REGION: config.get<string>("AWS_REGION"),
   ECS_CLUSTER: config.get<string>("ECS_CLUSTER"),
   TASK_DEFINITION: config.get<string>("TASK_DEFINITION"),
   CONTAINER_DATABASE_URL: config.get<string>("CONTAINER_DATABASE_URL"),
